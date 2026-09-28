@@ -6,8 +6,9 @@ dist/
 build/
 *.tsbuildinfo
 
-# Test coverage
+# Test coverage / reports
 coverage/
+test-report/
 
 # Environment variables
 .env
