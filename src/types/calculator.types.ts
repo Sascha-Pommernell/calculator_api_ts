@@ -4,7 +4,7 @@ export const OPERATIONS = ["add", "subtract", "multiply", "divide"] as const;
 
 export type Operation = (typeof OPERATIONS)[number];
 
-export type BinaryOperation = (a: Decimal.Value, b: Decimal.Value) => Decimal;
+export type BinaryOperation = (a: Decimal.Value, b: Decimal.Value, ...rest: Decimal.Value[]) => Decimal;
 
 export interface CalculationRequest {
     a: number;

@@ -23,14 +23,22 @@ function checked(result: Decimal): Decimal {
     return result.toDecimalPlaces(DECIMAL_MAX_SCALE);
 }
 
-export const add: BinaryOperation = (a, b) => checked(new CalcDecimal(a).plus(b));
-export const subtract: BinaryOperation = (a, b) => checked(new CalcDecimal(a).minus(b));
-export const multiply: BinaryOperation = (a, b) => checked(new CalcDecimal(a).times(b));
+export const add: BinaryOperation = (a, b, ...rest) =>
+    rest.reduce<Decimal>((result, value) => checked(result.plus(value)), checked(new CalcDecimal(a).plus(b)));
 
-export const divide: BinaryOperation = (a, b) => {
-    const divisor = new CalcDecimal(b);
-    if (divisor.isZero()) throw new DivisionByZeroError();
-    return checked(new CalcDecimal(a).div(divisor));
+export const subtract: BinaryOperation = (a, b, ...rest) =>
+    rest.reduce<Decimal>((result, value) => checked(result.minus(value)), checked(new CalcDecimal(a).minus(b)));
+
+export const multiply: BinaryOperation = (a, b, ...rest) =>
+    rest.reduce<Decimal>((result, value) => checked(result.times(value)), checked(new CalcDecimal(a).times(b)));
+
+export const divide: BinaryOperation = (a, b, ...rest) => {
+    const divisors = [b, ...rest];
+    return divisors.reduce<Decimal>((result, value) => {
+        const divisor = new CalcDecimal(value);
+        if (divisor.isZero()) throw new DivisionByZeroError();
+        return checked(result.div(divisor));
+    }, new CalcDecimal(a));
 };
 
 export const operations: Readonly<Record<Operation, BinaryOperation>> = {

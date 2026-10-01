@@ -31,6 +31,23 @@ describe("calculator.service", () => {
         ] as const)("%s: %s(%d, %d) = %s", (_id, op, a, b, expected) => {
             expect(operations[op](a, b).toString()).toBe(expected);
         });
+
+        it("processes more than two numbers from left to right", () => {
+            expect(add(1, 2, 3).toString()).toBe("6");
+            expect(subtract(10, 2, 3).toString()).toBe("5");
+            expect(multiply(2, 3, 4).toString()).toBe("24");
+            expect(divide(100, 2, 5).toString()).toBe("10");
+        });
+
+        it("preserves left-to-right order for non-associative operations", () => {
+            expect(subtract(20, 5, 3).toString()).toBe("12");
+            expect(divide(120, 5, 3).toString()).toBe("8");
+        });
+
+        it("accepts Decimal.Value strings in later operands", () => {
+            expect(add("0.1", "0.2", "0.3").toString()).toBe("0.6");
+            expect(multiply("1.5", "2", "0.1").toString()).toBe("0.3");
+        });
     });
 
     describe("4.2 Dezimal-Randfälle – Präzision", () => {
@@ -77,6 +94,11 @@ describe("calculator.service", () => {
             expect(subtract(MIN, 0).toString()).toBe(MIN);
         });
 
+        it("detects overflow in a later operation step", () => {
+            expect(() => add(MAX, 0, 1)).toThrow(OverflowError);
+            expect(() => multiply("1e14", "1e14", 10)).toThrow(OverflowError);
+        });
+
         it("OverflowError is a CalculationError", () => {
             expect(new OverflowError()).toBeInstanceOf(CalculationError);
         });
@@ -94,6 +116,10 @@ describe("calculator.service", () => {
 
         it("DivisionByZeroError is a CalculationError", () => {
             expect(new DivisionByZeroError()).toBeInstanceOf(CalculationError);
+        });
+
+        it("rejects zero in a later divisor", () => {
+            expect(() => divide(10, 2, 0)).toThrow(DivisionByZeroError);
         });
     });
 
