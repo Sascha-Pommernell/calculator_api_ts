@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      tests_ref:
+        description: Git ref of the test repository (calculator_api_test_ts)
+        default: main
+        type: string
 
 permissions:
   contents: read
@@ -43,6 +48,71 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           path: test-report/
+
+  api-tests:
+    name: Playwright API tests (black box)
+    needs: test
+    runs-on: ubuntu-24.04
+    env:
+      API_BASE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Checkout test repository
+        uses: actions/checkout@v6
+        with:
+          repository: Sascha-Pommernell/calculator_api_test_ts
+          ref: ${{ inputs.tests_ref || 'main' }}
+          path: api-tests
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            api-tests/package-lock.json
+
+      - name: Build API
+        run: |
+          npm ci
+          npm run build
+
+      - name: Start API and wait for /health
+        run: |
+          PORT=3000 nohup npm start > api.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS "$API_BASE_URL/health" > /dev/null; then
+              echo "API is healthy"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "API did not become healthy"
+          cat api.log
+          exit 1
+
+      - name: Run Playwright API tests
+        working-directory: api-tests
+        run: |
+          npm ci
+          npm test
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: playwright-report
+          path: |
+            api-tests/playwright-report/
+            api-tests/test-results/
+
+      - name: Upload API log
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: api-log
+          path: api.log
 
   deploy-report:
     name: Publish test report to GitHub Pages

@@ -20,7 +20,7 @@ describe("calculator.validation – isCalculationRequest", () => {
             ["TC-VAL-03: empty object", {}],
             ["TC-VAL-04: undefined body", undefined],
             ["null body", null],
-            ["array body", [1, 2]],
+            ["TC-VAL-02: array body", [1, 2]],
             ["string body", "1"],
             ["TC-VAL-05: string operand", { a: 1, b: "abc" }],
             ["numeric string operand", { a: "1", b: 2 }],

@@ -7,14 +7,6 @@ import { VALIDATION_ERROR } from "../src/validation/calculator.validation.js";
 const BASE = "/api/calculate";
 const OVERFLOW_ERROR = "Arithmetic overflow: result exceeds the decimal range";
 
-describe("GET /health", () => {
-    it("returns ok", async () => {
-        const res = await request(app).get("/health");
-        expect(res.status).toBe(200);
-        expect(res.body).toEqual({ status: "ok" });
-    });
-});
-
 describe("POST /api/calculate/:operation", () => {
     describe("4.1 Happy Path – Grundrechenarten (200 OK)", () => {
         it.each([
@@ -41,6 +33,7 @@ describe("POST /api/calculate/:operation", () => {
             ["TC-DEC-02", "subtract", 1, 0.9, "0.1"],
             ["TC-DEC-03", "multiply", 1.1, 1.1, "1.21"],
             ["TC-DEC-04", "divide", 1, 3, "0.3333333333333333333333333333"],
+            ["TC-DEC-09", "divide", 2, 3, "0.6666666666666666666666666667"],
         ])("%s: %s(%d, %d) = exactly %s", async (_id, operation, a, b, expected) => {
             const res = await request(app).post(`${BASE}/${operation}`).send({ a, b });
             expect(res.status).toBe(200);
@@ -79,6 +72,7 @@ describe("POST /api/calculate/:operation", () => {
 
         it.each([
             ["TC-VAL-01: only one operand", { a: 42 }],
+            ["TC-VAL-02: array instead of object", [1, 2]],
             ["TC-VAL-03: empty object", {}],
             ["TC-VAL-05: string operand", { a: 1, b: "abc" }],
             ["TC-VAL-07: null operand", { a: 1, b: null }],
@@ -104,12 +98,12 @@ describe("POST /api/calculate/:operation", () => {
 
         it("TC-VAL-08: valid body with Content-Type text/plain is rejected", async () => {
             const res = await request(app).post(url).set("Content-Type", "text/plain").send('{"a":1,"b":2}');
-            // The API does not parse non-JSON bodies; the concept's 415 is not implemented.
+            // Non-JSON bodies are not parsed, so the request fails validation (400, not 415).
             expect(res.status).toBe(400);
             expect(res.body).toEqual({ error: VALIDATION_ERROR });
         });
 
-        it("rejects payloads above the 10kb body limit", async () => {
+        it("TC-VAL-09: rejects payloads above the 10kb body limit", async () => {
             const res = await request(app).post(url).send({ a: 1, b: 2, padding: "x".repeat(11_000) });
             expect(res.status).toBe(413);
             expect(res.body).toEqual({ error: "Request rejected" });
@@ -131,9 +125,9 @@ describe("POST /api/calculate/:operation", () => {
             expect(error.headers["content-type"]).toMatch(/^application\/json/);
         });
 
-        it("TC-CON-03: GET on a POST endpoint is not routed", async () => {
+        it("TC-CON-03: GET on a POST endpoint returns 404", async () => {
             const res = await request(app).get(`${BASE}/add`);
-            // The API answers 404 here; the concept's 405 is not implemented.
+            // Express routes per method; there is no 405 handling.
             expect(res.status).toBe(404);
             expect(res.body).toEqual({ error: "Not found" });
         });
@@ -150,7 +144,13 @@ describe("POST /api/calculate/:operation", () => {
             expect(res.body).toEqual({ operation: "add", a: 1, b: 2, result: 3 });
         });
 
-        it("does not expose the x-powered-by header", async () => {
+        it("TC-CON-06: GET /health returns ok", async () => {
+            const res = await request(app).get("/health");
+            expect(res.status).toBe(200);
+            expect(res.body).toEqual({ status: "ok" });
+        });
+
+        it("TC-CON-07: does not expose the x-powered-by header", async () => {
             const res = await request(app).get("/health");
             expect(res.headers["x-powered-by"]).toBeUndefined();
         });

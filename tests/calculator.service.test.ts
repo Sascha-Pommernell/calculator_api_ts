@@ -32,11 +32,13 @@ describe("calculator.service", () => {
             expect(operations[op](a, b).toString()).toBe(expected);
         });
 
-        it("processes more than two numbers from left to right", () => {
-            expect(add(1, 2, 3).toString()).toBe("6");
-            expect(subtract(10, 2, 3).toString()).toBe("5");
-            expect(multiply(2, 3, 4).toString()).toBe("24");
-            expect(divide(100, 2, 5).toString()).toBe("10");
+        it.each([
+            ["TC-ADD-02", "add", [1, 2, 3, 4], "10"],
+            ["TC-SUB-02", "subtract", [10, 4, 3], "3"],
+            ["TC-MUL-02", "multiply", [2, 3, 4], "24"],
+            ["TC-DIV-02", "divide", [100, 5, 2], "10"],
+        ] as const)("%s: %s(%s) = %s (variadic, left to right)", (_id, op, [a, b, ...rest], expected) => {
+            expect(operations[op](a, b, ...rest).toString()).toBe(expected);
         });
 
         it("preserves left-to-right order for non-associative operations", () => {
@@ -67,7 +69,7 @@ describe("calculator.service", () => {
             expect(divide(1, 3).toString()).toBe("0.3333333333333333333333333333");
         });
 
-        it("rounds half away from zero at the 28th digit (2 / 3)", () => {
+        it("TC-DEC-09: 2 / 3 rounds half away from zero at the 28th digit", () => {
             expect(divide(2, 3).toString()).toBe("0.6666666666666666666666666667");
         });
     });
@@ -89,12 +91,12 @@ describe("calculator.service", () => {
             expect(() => divide(MAX, 0.5)).toThrow(OverflowError);
         });
 
-        it("accepts results exactly at the range limits", () => {
+        it("TC-DEC-10: accepts results exactly at the range limits", () => {
             expect(add(MAX, 0).toString()).toBe(MAX);
             expect(subtract(MIN, 0).toString()).toBe(MIN);
         });
 
-        it("detects overflow in a later operation step", () => {
+        it("TC-DEC-11: detects overflow in a later operation step", () => {
             expect(() => add(MAX, 0, 1)).toThrow(OverflowError);
             expect(() => multiply("1e14", "1e14", 10)).toThrow(OverflowError);
         });
@@ -118,7 +120,7 @@ describe("calculator.service", () => {
             expect(new DivisionByZeroError()).toBeInstanceOf(CalculationError);
         });
 
-        it("rejects zero in a later divisor", () => {
+        it("TC-DIV0-03: rejects zero in a later divisor", () => {
             expect(() => divide(10, 2, 0)).toThrow(DivisionByZeroError);
         });
     });
