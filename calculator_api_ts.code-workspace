@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../calculator_api_test_ts"
+		},
+		{
+			"path": "../calculator_ui_ts"
 		}
 	],
 	"settings": {}
