@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../calculator_ui_ts"
+		},
+		{
+			"path": "../calculator_ui_tests_ts"
 		}
 	],
 	"settings": {}
