@@ -16,13 +16,16 @@ function createHandler(operation: Operation) {
             return;
         }
 
-        const { a, b } = req.body;
+        const { numbers } = req.body;
+        const [a, b, ...rest] = numbers;
         try {
-            const result = calculate(a, b);
+            const result = calculate(a, b, ...rest);
             // Hand-built JSON: JSON.stringify would round the result to double precision.
             res.status(200)
                 .type("application/json")
-                .send(`{"operation":"${operation}","a":${a},"b":${b},"result":${result.toString()}}`);
+                .send(
+                    `{"operation":"${operation}","numbers":${JSON.stringify(numbers)},"result":${result.toString()}}`,
+                );
         } catch (err) {
             next(err);
         }
